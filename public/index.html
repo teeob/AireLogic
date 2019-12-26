@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<head>
+    <title>AireLogic</title>
+    <style>
+        body {
+          margin: 0;
+          padding: 10px;
+          font-family: sans-serif;
+          line-height: 1.5;
+        }
+        wired-search-input {
+          margin: 5px 15px;
+        }
+      </style>
+</head>
+<body>
+    <script src="https://unpkg.com/wired-elements@1.0.0/dist/wired-elements.bundled.js"></script>
+    <!-- <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script> -->
+
+    <!-- <wired-input placeholder="Enter name"></wired-input>
+    <wired-button>Click Me</wired-button> -->
+
+    <!-- <p>
+        <wired-button id="btn1">Submit</wired-button>
+     </p> -->
+
+     <!-- <wired-card elevation="4" class="wired-rendered">
+        <rough-demo style="--wired-item-selected-bg:red;"></rough-demo>
+      </wired-card> -->
+
+      <wired-card class="wired-rendered">
+        <h4>AireLogic</h4>
+        <wired-input id="query" placeholder="enter artists name"></wired-input>
+        <wired-button type="submit" id="submit">gogogo</wired-button>
+        <p>
+          Lorem ipsum dolor sit amet
+        </p>
+        <p>
+            Lorem ipsum dolor sit amet
+          </p>
+      </wired-card>
+
+    <!-- <script src="app.js"></script> -->
+    <script>
+    /*
+    $("wired-button").click(() => {
+        var query = $("wired-input").val();
+        
+        console.log(query);
+    });
+    */
+
+    document.addEventListener('DOMContentLoaded', () => {
+        document.getElementById('submit').addEventListener('click', (e) => {
+            e.preventDefault();
+
+            let query = document.getElementById('query').value;
+            let artisteUrl = `http://musicbrainz.org/ws/2/artist/?query=artist:${query}&limit=1&fmt=json`; //return top artist
+
+            fetch(artisteUrl)
+            .then(r => r.json())
+            .then((r) => {
+                //if(r.artists && r.artists.length){}
+
+                let albumUrl = `http://musicbrainz.org/ws/2/release-group/?query=release-group:%20*%20AND%20arid:${r.artists[0].id}%20AND%20status:official&limit=100&fmt=json`;
+                return fetch(albumUrl)
+            })
+            .then(r => r.json())
+            .then(r => {
+                //REMEMBER COUNT COULD BE MORE THAN 100
+                if(r['release-groups'] && r['release-groups'].length){
+                    console.log(r['release-groups']);
+
+                    let allRecordings = new Set();
+            
+                    r['release-groups'].forEach(delayLoop(e => {
+                        //let recordings = getRecordings(r['release-groups'][19].releases);
+                        let recordings = getRecordings(e.releases[0]);
+
+                        //allRecordings.add(recordings);
+                        //console.log(allRecordings);
+                    }, 1000));
+                }
+            })
+            .catch(e => console.error(`error finding artist ${e}`))
+
+
+            function getRecordings(...args){
+                let recordings = new Set();
+                
+                args.forEach(e => {
+                        let recordingUrl = `http://musicbrainz.org/ws/2/recording/?query=reid:${e.id}&limit=100&fmt=json`
+                        console.log(e)
+
+                        fetch(recordingUrl)
+                        .then(r => r.json())
+                        .then(r => {
+                            r.recordings.forEach(e =>{
+                                recordings.add(e.title);
+                            })
+                        })
+                        .catch(e => console.error(`error finding record ${e}`))
+                });
+
+                console.log(recordings);
+                return recordings;
+            }
+
+            const delayLoop = (fn, delay) => {
+            return (x, i) => {
+                setTimeout(() => {
+                fn(x);
+                }, i * delay);
+            };
+            };
+        })
+    })
+    </script>
+</body>
+</html>
