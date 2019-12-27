@@ -61,57 +61,59 @@
             .then(r => r.json())
             .then((r) => {
                 //if(r.artists && r.artists.length){}
+                console.log(r);
 
                 let albumUrl = `http://musicbrainz.org/ws/2/release-group/?query=release-group:%20*%20AND%20arid:${r.artists[0].id}%20AND%20status:official&limit=100&fmt=json`;
-                return fetch(albumUrl)
+                return fetch(albumUrl) // get album
             })
             .then(r => r.json())
             .then(r => {
                 //REMEMBER COUNT COULD BE MORE THAN 100
                 if(r['release-groups'] && r['release-groups'].length){
-                    console.log(r['release-groups']);
+                    console.log(r);
 
-                    let allRecordings = new Set();
+                    let recordings = new Set(); let releases = [];
             
-                    r['release-groups'].forEach(delayLoop(e => {
-                        //let recordings = getRecordings(r['release-groups'][19].releases);
-                        let recordings = getRecordings(e.releases[0]);
+                    r['release-groups'].forEach(releaseGroup => {
+                        releaseGroup.releases.forEach(r => {
+                            releases.push(r); //to make quering for each individual release easier
+                        })
+                    })
 
-                        //allRecordings.add(recordings);
-                        //console.log(allRecordings);
-                    }, 1000));
+                    releases.forEach(delayLoop(release => {
+                        getRecordings(recordings, release);
+                    }, 1000))
                 }
             })
             .catch(e => console.error(`error finding artist ${e}`))
+            //finally
 
 
-            function getRecordings(...args){
-                let recordings = new Set();
-                
-                args.forEach(e => {
-                        let recordingUrl = `http://musicbrainz.org/ws/2/recording/?query=reid:${e.id}&limit=100&fmt=json`
-                        console.log(e)
+            function getRecordings(recordings, release){
+                let recordingUrl = `http://musicbrainz.org/ws/2/recording/?query=reid:${release.id}&limit=100&fmt=json`
 
-                        fetch(recordingUrl)
-                        .then(r => r.json())
-                        .then(r => {
-                            r.recordings.forEach(e =>{
-                                recordings.add(e.title);
-                            })
-                        })
-                        .catch(e => console.error(`error finding record ${e}`))
-                });
+                console.log(release);
+
+                fetch(recordingUrl)
+                .then(r => r.json())
+                .then(r => {
+                    r.recordings.forEach(recording =>{
+                        recordings.add(recording.title);
+                    })
+                })
+                .catch(e => console.error(`error finding record ${e}`))
+                //finally
 
                 console.log(recordings);
                 return recordings;
             }
 
-            const delayLoop = (fn, delay) => {
-            return (x, i) => {
-                setTimeout(() => {
-                fn(x);
-                }, i * delay);
-            };
+            function delayLoop(fn, delay){
+                return (x, i) => {
+                    setTimeout(() => {
+                    fn(x);
+                    }, i * delay);
+                };
             };
         })
     })
