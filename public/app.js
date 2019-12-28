@@ -26,9 +26,9 @@ function processQuery(query) {
         let limit = 100; let artist = r.artists[0].id
 
         const albumUrl = `http://musicbrainz.org/ws/2/release-group/?query=release-group:%20*%20AND%20arid:${artist}%20AND%20status:official&limit=${limit}&fmt=json`;
-        let releasGroups = [];
+        let releaseGroups = [];
         
-        return keepFetching(albumUrl, releasGroups, limit, artist);
+        return fetchAllReleaseGroups(albumUrl, releaseGroups, limit, artist);
     })
     .then(releaseGroups => {
         let recordings = new Map(); let releases = [];
@@ -45,10 +45,9 @@ function processQuery(query) {
         }, 1000))
     })
     .catch(e => console.error(`error finding artist ${e}`))
-        //finally
 }
 
-async function keepFetching(url, releaseGroups, count, artist){
+async function fetchAllReleaseGroups(url, releaseGroups, count, artist){
 
     try {
         let res = await fetch(url);
@@ -60,7 +59,7 @@ async function keepFetching(url, releaseGroups, count, artist){
             const albumUrl = `http://musicbrainz.org/ws/2/release-group/?query=release-group:%20*%20AND%20arid:${artist}%20AND%20status:official&limit=100&offset=${count}&fmt=json`
             count+=100
 
-            return keepFetching(albumUrl, releaseGroups, count, artist)
+            return fetchAllReleaseGroups(albumUrl, releaseGroups, count, artist)
         }
 
         return releaseGroups;
