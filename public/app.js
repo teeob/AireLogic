@@ -23,7 +23,7 @@ function process(query) {
     fetch(artisteUrl)
     .then(r => r.json())
     .then(r => {
-        let limit = 100; let artist = r.artists[0].id
+        const limit = 100; const artist = r.artists[0].id
 
         const albumUrl = `http://musicbrainz.org/ws/2/release-group/?query=release-group:%20*%20AND%20arid:${artist}%20AND%20status:official&limit=${limit}&fmt=json`;
         let releaseGroups = [];
@@ -31,7 +31,7 @@ function process(query) {
         return fetchAllReleaseGroups(albumUrl, releaseGroups, limit, artist);
     })
     .then(releaseGroups => {
-        let recordings = new Map(); let releases = []; let jh = new Map();
+         let releases = []; 
 
         releaseGroups.forEach(releaseGroup => {
             releaseGroup.releases.forEach(release => {
@@ -40,36 +40,49 @@ function process(query) {
             })
         })
 
-        // releases.forEach(delayLoop(release => {
-        //     getRecordings(recordings, release);
-        // }, 1000))
-        // releases.forEach((release, i) => {
-        //     setTimeout(() => {
-        //         getRecordings(recordings, release);
-        //         console.log('2')
-        //     }, i * 1000);
-        //     console.log('1')
-        // })
-
-        for(let x=0; x<= releases.length; x++){
-            setTimeout(function(){
-                if(x == releases.length) {
-                    
-                    jh = recordings
-                    console.log(jh)
-                    //return jh;
-                }else {
-                getRecordings(recordings, releases[x]);
-                }
-            }, x*1000);
-        }
-       // if(jh)
+        return releases;
     })
-    .then(r=> {
-        console.log('test')
-        console.log(r)
+    .then(releases => {
+        let recordings = new Map();
+        let limit = releases.length;
+
+        for(let i=0; i<= limit; i++){
+            setTimeout(() => {
+                if(i == limit) {
+                    getLyricsOf(recordings);
+
+                    console.log(recordings)
+                }else {
+                    getRecordings(recordings, releases[i]);
+                }
+            }, i*1000);
+        }
     })
     .catch(e => console.error(`error finding artist ${e}`))
+}
+
+async function getLyricsOf(recordings) {
+    try {
+        //console.log(recordings);
+         for (let [recording, artist] of recordings.entries()) {
+            //console.log(recording, artist);
+        // let artist = 'Bon Iver'
+        // let recording = 'Fall Creek Boys Choir'
+
+        console.log(recording);
+        recording = recording.replace(new RegExp('/', 'g'), '-');
+            console.log(recording);
+
+            const recordUrl = `https://api.lyrics.ovh/v1/${artist}/${recording}`
+            const res = await fetch(recordUrl);
+            let r = await res.json();
+            
+            console.log(r);
+        }
+    }
+    catch (e) {
+        console.error(`error fetching lyrics || error message -> ${e}`)
+    }
 }
 
 /** 
@@ -100,11 +113,10 @@ async function fetchAllReleaseGroups(url, releaseGroups, count, artist) {
  * function that gets all recordings/songs in each release of an album(or release group)
 */
 async function getRecordings(recordings, release) {
-
     try {
         const recordingUrl = `http://musicbrainz.org/ws/2/recording/?query=reid:${release.id}&limit=100&fmt=json`
 
-        let res = await fetch(recordingUrl);
+        const res = await fetch(recordingUrl);
         let r = await res.json();
 
         r.recordings.forEach(recording => {
