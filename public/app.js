@@ -53,18 +53,20 @@ function process(query) {
         const limit = releases.length;
 
         for(let i=0; i<= limit; i++){
-            setTimeout(() => {
+            setTimeout(async () => {
                 if(i == limit) {
-                    getLyricsOf(recordings);
+                    recordings = await getLyricsOf(recordings);
 
                     console.log(recordings);
+
+                    let statistics = getStatistics(recordings);
 
                     $("wired-spinner").hide();
 
                    // document.getElementById("artist").innerHTML = query
                     $('#p1')[0].innerHTML = `${query} has ${recordings.size} songs`
-                    $('#p2')[0].innerHTML = `the total amount of words discovered approximate to x and average at x words`
-                    $('#p3')[0].innerHTML = `x song has the most amount of words & x song has the least amount of words`
+                    $('#p2')[0].innerHTML = `the total amount of words discovered approximate to ${statistics.total} and average at approximately ${Math.round(statistics.average)} words`
+                    $('#p3')[0].innerHTML = `${statistics.maxSong} has the most amount of words with ${statistics.max} words & ${statistics.minSong} has the least amount of words with ${statistics.min} words`
                 }else {
                     getRecordings(recordings, releases[i]);
                 }
@@ -72,6 +74,40 @@ function process(query) {
         }
     })
     .catch(e => console.error(`error finding artist ${e}`))
+}
+
+function getStatistics(recordings) {
+    let max=Number.MIN_VALUE, min=Number.MAX_VALUE, total=0, average = 0; 
+    let maxSong, minSong = "";
+
+    for (let [record, artist] of recordings.entries()) {
+        //if(artist.count)
+            total += artist.count;
+
+        if(artist.count > max){
+            max = artist.count;
+            maxSong = record;
+        }
+
+        if(artist.count < min){
+            min = artist.count;
+            minSong = record;
+        }
+    }
+
+    average = total/recordings.size;
+
+    console.log('max -> ' + max + ' min -> ' + min + ' total -> ' + total);
+    //console.log(' done -> ' + total);
+
+    return {
+        'max': max,
+        'min': min,
+        'total': total,
+        'average': average,
+        'maxSong': maxSong,
+        'minSong': minSong
+    };
 }
 
 async function getLyricsOf(recordings) {
@@ -82,15 +118,16 @@ async function getLyricsOf(recordings) {
         // let artist = 'Bon Iver'
         // let recording = 'Fall Creek Boys Choir'
 
-        record = record.replace(new RegExp('/', 'g'), '-');
+            record = record.replace(new RegExp('/', 'g'), '-');
 
             const recordUrl = `https://api.lyrics.ovh/v1/${artist.artist}/${record}`
             const res = await fetch(recordUrl);
             let r = await res.json();
             
-            if(r.lyrics && r.lyrics.length)
-                artist.count = wordCount(r.lyrics);
+            (r.lyrics && r.lyrics.length) ? artist.count = wordCount(r.lyrics) : artist.count = 0;
         }
+
+        return recordings;
     }
     catch (e) {
         console.error(`error fetching lyrics || error message -> ${e}`)
