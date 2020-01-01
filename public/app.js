@@ -18,9 +18,14 @@ function process(query) {
     })
     .then(releaseGroups => {
         /* then collate all releases of albums */
-        const releases = []; 
+        let releases = []; let albums = []; 
 
         releaseGroups.forEach(releaseGroup => {
+            
+            if(releaseGroup['primary-type'] === "Album" && !(releaseGroup['secondary-types'] && releaseGroup['secondary-types'].length)){
+                albums.push(releaseGroup.title);
+            }
+
             releaseGroup.releases.forEach(release => {
                 /* add to array to make quering musicbrainz for each individual release easier */
                 release.album = releaseGroup.title;
@@ -28,44 +33,53 @@ function process(query) {
             })
         })
 
-        return releases;
+        return {releases, albums};
     })
-    .then(releases => {
+    .then(values => {
         /* then get distinct record and calculate statistics */
         let recordings = new Map();
+        let releases = values.releases;
+        let albums = values.albums;
+
         const limit = releases.length;
 
         for(let i=0; i<= limit; i++){
             setTimeout(async () => {
-                if(i == limit) {
+                if(i === limit) {
                     recordings = await getLyricsOf(recordings);
 
-                    console.log(recordings);
+                    let statistics = getStatistics(recordings, albums);
 
-                    let statistics = getStatistics(recordings);
+                    console.log(recordings);
+                    console.log(statistics.albumsMap);
 
                     $("wired-spinner").hide();
 
-                    $('#p1')[0].innerHTML = `${query} has ${recordings.size} songs.`
+                    $('#p1')[0].innerHTML = `${query} has ${recordings.size} songs & ${albums.length} albums.`
                     if(recordings.size > 0) {
-                        $('#p2')[0].innerHTML = `the total amount of words discovered approximate to <b>${statistics.total}</b> averaging roughly at ${Math.ceil(statistics.average)} words per song.`
-                        $('#p3')[0].innerHTML = `"${statistics.maxSong}" has the most amount of words with ${statistics.max} words & "${statistics.minSong}" has the least with ${statistics.min} words.`
+                        $('#p2')[0].innerHTML = `the total amount of words discovered approximate to ${statistics.total}* words averaging roughly at ${statistics.average} words per song.`
+                        $('#p3')[0].innerHTML = `"${statistics.maxAlbum}" album has the most amount of words with ${statistics.albumsMap.get(statistics.maxAlbum).val} words & "${statistics.maxSong}" is the song having most words with ${statistics.max} words.`
+                        $('#p4')[0].innerHTML = `The bar chart shows how all ${query}'s songs vary in words per album.`
                     }
+
+
                 }else {
                     getRecordings(recordings, releases[i]);
                 }
             }, i*1000);
         }
     })
-    .catch(e => console.error(`error finding artist ${e}`))
+    .catch(e => console.error(`error message -> ${e} ${e}`))
 }
 
 /** 
  * function to calculate statistics for the recordings(songs)
 */
-function getStatistics(recordings) {
+function getStatistics(recordings, albumsArr) {
     let max=Number.MIN_VALUE, min=Number.MAX_VALUE, total=0; 
-    let maxSong, minSong = "";
+    let maxSong, minSong, maxAlbum = "";
+
+    let albumsMap = new Map();
 
     for (let [record, artist] of recordings.entries()) {
         total += artist.count;
@@ -79,18 +93,28 @@ function getStatistics(recordings) {
             min = artist.count;
             minSong = record;
         }
+
+        if(albumsArr.includes(artist.album)) {
+            if(albumsMap.has(artist.album)){
+                albumsMap.get(artist.album).val+=artist.count;
+            }
+            else{
+                albumsMap.set(artist.album, {val: artist.count})
+            }
+        }
     }
 
-    let average = total/recordings.size;
+    let x = 0;
+    for (let [record, count] of albumsMap.entries()) {
+        if(count.val > x) {
+            x = count.val;
+            maxAlbum = record;
+        }
+    }
 
-    return {
-        'max': max,
-        'min': min,
-        'total': total,
-        'average': average,
-        'maxSong': maxSong,
-        'minSong': minSong
-    };
+    let average = Math.ceil(total/recordings.size);
+
+    return {max, min, total, average, maxSong, minSong, albumsMap, maxAlbum};
 }
 
 /** 
@@ -155,6 +179,7 @@ async function getRecordings(recordings, release) {
         let r = await res.json();
 
         r.recordings.forEach(recording => {
+            //console.log(recording)
             /* add owner of record, in case artist has been featured - useful when searching for lyrics */
             recordings.set(recording.title.toLowerCase(), {artist: recording['artist-credit'][0].name, album: release.album}); 
         })
@@ -162,7 +187,6 @@ async function getRecordings(recordings, release) {
     catch (e) {
         console.error(`failed to get recordings for ${release.title} || error mesage -> ${e}`)
     }
-    console.log('3')
 }
 
 function refresh() {
