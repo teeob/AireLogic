@@ -1,33 +1,14 @@
 'use strict'
-document.addEventListener('DOMContentLoaded', () => {
-    $("wired-button").click((e) => {
-        e.preventDefault();
-
-        let query = $("wired-input").val();
-        
-        //console.log(query);
-        process(query);
-    });
-})
-
-// document.addEventListener('DOMContentLoaded', () => {
-//     document.getElementById('submit').addEventListener('click', (e) => {
-//         e.preventDefault();
-
-//         let query = document.getElementById('query').value;
-        
-//         process(query);
-//     })
-// })
 
 function process(query) {
-    $("wired-spinner").show();
+    refresh();
 
     const artisteUrl = `http://musicbrainz.org/ws/2/artist/?query=artist:${query}&limit=1&fmt=json`; //return top artist
 
     fetch(artisteUrl)
     .then(r => r.json())
     .then(r => {
+        /* first get all albums for artist */
         const limit = 100; const artist = r.artists[0].id
 
         const albumUrl = `http://musicbrainz.org/ws/2/release-group/?query=release-group:%20*%20AND%20arid:${artist}%20AND%20status:official&limit=${limit}&fmt=json`;
@@ -36,6 +17,7 @@ function process(query) {
         return fetchAllReleaseGroups(albumUrl, releaseGroups, limit, artist);
     })
     .then(releaseGroups => {
+        /* then collate all releases of albums */
         const releases = []; 
 
         releaseGroups.forEach(releaseGroup => {
@@ -49,6 +31,7 @@ function process(query) {
         return releases;
     })
     .then(releases => {
+        /* then get distinct record and calculate statistics */
         let recordings = new Map();
         const limit = releases.length;
 
@@ -63,10 +46,11 @@ function process(query) {
 
                     $("wired-spinner").hide();
 
-                   // document.getElementById("artist").innerHTML = query
-                    $('#p1')[0].innerHTML = `${query} has ${recordings.size} songs`
-                    $('#p2')[0].innerHTML = `the total amount of words discovered approximate to ${statistics.total} and average at approximately ${Math.round(statistics.average)} words`
-                    $('#p3')[0].innerHTML = `${statistics.maxSong} has the most amount of words with ${statistics.max} words & ${statistics.minSong} has the least amount of words with ${statistics.min} words`
+                    $('#p1')[0].innerHTML = `${query} has ${recordings.size} songs.`
+                    if(recordings.size > 0) {
+                        $('#p2')[0].innerHTML = `the total amount of words discovered approximate to <b>${statistics.total}</b> averaging roughly at ${Math.ceil(statistics.average)} words per song.`
+                        $('#p3')[0].innerHTML = `"${statistics.maxSong}" has the most amount of words with ${statistics.max} words & "${statistics.minSong}" has the least with ${statistics.min} words.`
+                    }
                 }else {
                     getRecordings(recordings, releases[i]);
                 }
@@ -76,13 +60,15 @@ function process(query) {
     .catch(e => console.error(`error finding artist ${e}`))
 }
 
+/** 
+ * function to calculate statistics for the recordings(songs)
+*/
 function getStatistics(recordings) {
-    let max=Number.MIN_VALUE, min=Number.MAX_VALUE, total=0, average = 0; 
+    let max=Number.MIN_VALUE, min=Number.MAX_VALUE, total=0; 
     let maxSong, minSong = "";
 
     for (let [record, artist] of recordings.entries()) {
-        //if(artist.count)
-            total += artist.count;
+        total += artist.count;
 
         if(artist.count > max){
             max = artist.count;
@@ -95,10 +81,7 @@ function getStatistics(recordings) {
         }
     }
 
-    average = total/recordings.size;
-
-    console.log('max -> ' + max + ' min -> ' + min + ' total -> ' + total);
-    //console.log(' done -> ' + total);
+    let average = total/recordings.size;
 
     return {
         'max': max,
@@ -110,13 +93,12 @@ function getStatistics(recordings) {
     };
 }
 
+/** 
+ * async function that gets lyrics of all recodings(songs)
+*/
 async function getLyricsOf(recordings) {
     try {
-        //console.log(recordings);
          for (let [record, artist] of recordings.entries()) {
-            //console.log(recording, artist);
-        // let artist = 'Bon Iver'
-        // let recording = 'Fall Creek Boys Choir'
 
             record = record.replace(new RegExp('/', 'g'), '-');
 
@@ -176,9 +158,6 @@ async function getRecordings(recordings, release) {
             /* add owner of record, in case artist has been featured - useful when searching for lyrics */
             recordings.set(recording.title.toLowerCase(), {artist: recording['artist-credit'][0].name, album: release.album}); 
         })
-
-        //console.log(recordings)
-        // return recordings;
     }
     catch (e) {
         console.error(`failed to get recordings for ${release.title} || error mesage -> ${e}`)
@@ -186,10 +165,20 @@ async function getRecordings(recordings, release) {
     console.log('3')
 }
 
-function delayLoop(fn, delay) {
-    return (x, i) => {
-        setTimeout(() => {
-        fn(x);
-        }, i * delay);
-    };
-};
+function refresh() {
+    $("wired-spinner").show();
+
+    $('#p1')[0].innerHTML = ''
+    $('#p2')[0].innerHTML = ''
+    $('#p3')[0].innerHTML = ''
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    $("wired-button").click((e) => {
+        e.preventDefault();
+
+        let query = $("wired-input").val();
+        
+        process(query);
+    });
+})

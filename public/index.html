@@ -1,65 +1,14 @@
 <!DOCTYPE html>
+<html lang="en">
 <head>
     <title>AireLogic</title>
-    <style>
-        body {
-          margin: 0;
-          padding: 10px;
-          font-family: sans-serif;
-          line-height: 1.5;
-          display: flex;
-          /* padding: 16px 8px; */
-          box-sizing: border-box;
-          font-family: 'Gloria Hallelujah', cursive;
-        }
-        /* wired-search-input {
-          margin: 5px 15px;
-        }
-
-        p {
-          margin: 5px 15px;
-        } */
-
-
-        wired-button {
-          margin-left: 10px;
-          /* background: yellow; */
-        }
-
-        wired-spinner {
-          margin-left: 80px;
-          display: flex;
-        }
-
-        wired-card {
-          max-width: 400px;
-          box-sizing: border-box;
-          margin: 0 auto;
-          padding: 20px;
-          display: block;
-        }
-
-        wired-input {
-          font-family: inherit;
-        }
-      </style>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <!-- <script src="https://unpkg.com/wired-elements@1.0.0/dist/wired-elements.bundled.js"></script> -->
     <link href="https://fonts.googleapis.com/css?family=Gloria+Hallelujah&display=swap" rel="stylesheet">
     <script type="module" src="https://cdn.pika.dev/wired-elements/latest"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
-
-    <!-- <wired-input placeholder="Enter name"></wired-input>
-    <wired-button>Click Me</wired-button> -->
-
-    <!-- <p>
-        <wired-button id="btn1">Submit</wired-button>
-     </p> -->
-
-     <!-- <wired-card elevation="4" class="wired-rendered">
-        <rough-demo style="--wired-item-selected-bg:red;"></rough-demo>
-      </wired-card> -->
 
       <wired-card class="wired-rendered">
         <h1>AireLogic</h1>
@@ -71,9 +20,7 @@
         <p id="p2"></p>
         <p id="p3"></p>
         <wired-divider class="wired-rendered"></wired-divider>
-        <p id="p4">DISCLAIMER</p>
-
-        <!-- DISCLAIMER!!!!! -->
+        <p id="p4">* some songs may not be discoverable on the <a href="https://lyricsovh.docs.apiary.io/">lyrics api</a> and would automatically be given a word count of 0.</p>
       </wired-card>
     <script src="app.js"></script>
 </body>

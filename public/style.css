@@ -1,0 +1,34 @@
+body {
+    margin: 0;
+    padding: 10px;
+    font-family: sans-serif;
+    line-height: 1.5;
+    display: flex;
+    /* padding: 16px 8px; */
+    box-sizing: border-box;
+    font-family: 'Gloria Hallelujah', cursive;
+    background: #84a79d;
+}
+
+wired-button {
+  margin-left: 10px;
+  background: #ffc400;
+}
+
+wired-spinner {
+  margin-left: 140px;
+  display: flex;
+}
+
+wired-card {
+  max-width: 400px;
+  box-sizing: border-box;
+  margin: 0 auto;
+  padding: 20px;
+  display: block;
+  background: rgb(187, 185, 185);
+}
+
+wired-input {
+  font-family: inherit;
+}
