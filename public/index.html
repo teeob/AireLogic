@@ -7,15 +7,48 @@
           padding: 10px;
           font-family: sans-serif;
           line-height: 1.5;
+          display: flex;
+          /* padding: 16px 8px; */
+          box-sizing: border-box;
+          font-family: 'Gloria Hallelujah', cursive;
         }
-        wired-search-input {
+        /* wired-search-input {
           margin: 5px 15px;
+        }
+
+        p {
+          margin: 5px 15px;
+        } */
+
+
+        wired-button {
+          margin-left: 10px;
+          /* background: yellow; */
+        }
+
+        wired-spinner {
+          margin-left: 80px;
+          display: flex;
+        }
+
+        wired-card {
+          max-width: 400px;
+          box-sizing: border-box;
+          margin: 0 auto;
+          padding: 20px;
+          display: block;
+        }
+
+        wired-input {
+          font-family: inherit;
         }
       </style>
 </head>
 <body>
-    <script src="https://unpkg.com/wired-elements@1.0.0/dist/wired-elements.bundled.js"></script>
-    <!-- <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script> -->
+    <!-- <script src="https://unpkg.com/wired-elements@1.0.0/dist/wired-elements.bundled.js"></script> -->
+    <link href="https://fonts.googleapis.com/css?family=Gloria+Hallelujah&display=swap" rel="stylesheet">
+    <script type="module" src="https://cdn.pika.dev/wired-elements/latest"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
 
     <!-- <wired-input placeholder="Enter name"></wired-input>
     <wired-button>Click Me</wired-button> -->
@@ -29,15 +62,18 @@
       </wired-card> -->
 
       <wired-card class="wired-rendered">
-        <h4>AireLogic</h4>
-        <wired-input id="query" placeholder="enter artists name"></wired-input>
-        <wired-button type="submit" id="submit">gogogo</wired-button>
-        <p>
-          Lorem ipsum dolor sit amet
-        </p>
-        <p>
-            Lorem ipsum dolor sit amet
-          </p>
+        <h1>AireLogic</h1>
+        <wired-input id="query" placeholder="ENTER ARTIST"></wired-input>
+        <wired-button id="submit" elevation="3">go!</wired-button>
+        <wired-spinner style="display:none" class="custom wired-rendered" spinning="" duration="1000"></wired-spinner>
+        <!-- <wired-search-input placeholder="Search here" class="wired-rendered"></wired-search-input> -->
+        <p id="p1"></p>
+        <p id="p2"></p>
+        <p id="p3"></p>
+        <wired-divider class="wired-rendered"></wired-divider>
+        <p id="p4">DISCLAIMER</p>
+
+        <!-- DISCLAIMER!!!!! -->
       </wired-card>
     <script src="app.js"></script>
 </body>

@@ -1,23 +1,28 @@
 'use strict'
-/*
-$("wired-button").click(() => {
-    var query = $("wired-input").val();
-    
-    console.log(query);
-});
-*/
-
 document.addEventListener('DOMContentLoaded', () => {
-    document.getElementById('submit').addEventListener('click', (e) => {
+    $("wired-button").click((e) => {
         e.preventDefault();
 
-        let query = document.getElementById('query').value;
+        let query = $("wired-input").val();
         
+        //console.log(query);
         process(query);
-    })
+    });
 })
 
+// document.addEventListener('DOMContentLoaded', () => {
+//     document.getElementById('submit').addEventListener('click', (e) => {
+//         e.preventDefault();
+
+//         let query = document.getElementById('query').value;
+        
+//         process(query);
+//     })
+// })
+
 function process(query) {
+    $("wired-spinner").show();
+
     const artisteUrl = `http://musicbrainz.org/ws/2/artist/?query=artist:${query}&limit=1&fmt=json`; //return top artist
 
     fetch(artisteUrl)
@@ -31,11 +36,12 @@ function process(query) {
         return fetchAllReleaseGroups(albumUrl, releaseGroups, limit, artist);
     })
     .then(releaseGroups => {
-         let releases = []; 
+        const releases = []; 
 
         releaseGroups.forEach(releaseGroup => {
             releaseGroup.releases.forEach(release => {
                 /* add to array to make quering musicbrainz for each individual release easier */
+                release.album = releaseGroup.title;
                 releases.push(release);
             })
         })
@@ -44,14 +50,21 @@ function process(query) {
     })
     .then(releases => {
         let recordings = new Map();
-        let limit = releases.length;
+        const limit = releases.length;
 
         for(let i=0; i<= limit; i++){
             setTimeout(() => {
                 if(i == limit) {
                     getLyricsOf(recordings);
 
-                    console.log(recordings)
+                    console.log(recordings);
+
+                    $("wired-spinner").hide();
+
+                   // document.getElementById("artist").innerHTML = query
+                    $('#p1')[0].innerHTML = `${query} has ${recordings.size} songs`
+                    $('#p2')[0].innerHTML = `the total amount of words discovered approximate to x and average at x words`
+                    $('#p3')[0].innerHTML = `x song has the most amount of words & x song has the least amount of words`
                 }else {
                     getRecordings(recordings, releases[i]);
                 }
@@ -64,25 +77,28 @@ function process(query) {
 async function getLyricsOf(recordings) {
     try {
         //console.log(recordings);
-         for (let [recording, artist] of recordings.entries()) {
+         for (let [record, artist] of recordings.entries()) {
             //console.log(recording, artist);
         // let artist = 'Bon Iver'
         // let recording = 'Fall Creek Boys Choir'
 
-        console.log(recording);
-        recording = recording.replace(new RegExp('/', 'g'), '-');
-            console.log(recording);
+        record = record.replace(new RegExp('/', 'g'), '-');
 
-            const recordUrl = `https://api.lyrics.ovh/v1/${artist}/${recording}`
+            const recordUrl = `https://api.lyrics.ovh/v1/${artist.artist}/${record}`
             const res = await fetch(recordUrl);
             let r = await res.json();
             
-            console.log(r);
+            if(r.lyrics && r.lyrics.length)
+                artist.count = wordCount(r.lyrics);
         }
     }
     catch (e) {
         console.error(`error fetching lyrics || error message -> ${e}`)
     }
+}
+
+const wordCount = (str) => { 
+    return str.match(/\S+/g).length;
 }
 
 /** 
@@ -121,7 +137,7 @@ async function getRecordings(recordings, release) {
 
         r.recordings.forEach(recording => {
             /* add owner of record, in case artist has been featured - useful when searching for lyrics */
-            recordings.set(recording.title, recording['artist-credit'][0].name); 
+            recordings.set(recording.title.toLowerCase(), {artist: recording['artist-credit'][0].name, album: release.album}); 
         })
 
         //console.log(recordings)
