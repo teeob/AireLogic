@@ -9,7 +9,7 @@ function process(query) {
     .then(r => r.json())
     .then(r => {
         /* first get all albums for artist */
-        const limit = 100; const artist = r.artists[0].id
+        const limit = 100; const artist = r.artists[0].id;
 
         const albumUrl = `http://musicbrainz.org/ws/2/release-group/?query=release-group:%20*%20AND%20arid:${artist}%20AND%20status:official&limit=${limit}&fmt=json`;
         let releaseGroups = [];
@@ -62,7 +62,7 @@ function process(query) {
                         $('#p4')[0].innerHTML = `The bar chart shows how all ${query}'s songs vary in words per album.`
                     }
 
-
+                    createTsv(statistics.albumsMap);
                 }else {
                     getRecordings(recordings, releases[i]);
                 }
@@ -72,9 +72,34 @@ function process(query) {
     .catch(e => console.error(`error message -> ${e} ${e}`))
 }
 
-/** 
+/**
+ * function to create tsv file
+ * @param {Map} albums 
+ */
+function createTsv(albums) {
+    let row = `letter	frequency\r\n`;
+
+    for (let [k, v] of albums.entries()) {
+        row += `${k}	${v.val}\r\n`
+    }
+
+    fetch('/save', {
+        method: 'POST', 
+        headers: {
+            'Content-Type': 'text/tab-separated-values'
+        },
+        body: row
+    })
+    .catch(e => console.log(e))
+
+    drawChart();
+ }
+
+/**
  * function to calculate statistics for the recordings(songs)
-*/
+ * @param {Map} recordings 
+ * @param {Array} albumsArr 
+ */
 function getStatistics(recordings, albumsArr) {
     let max=Number.MIN_VALUE, min=Number.MAX_VALUE, total=0; 
     let maxSong, minSong, maxAlbum = "";
@@ -116,10 +141,10 @@ function getStatistics(recordings, albumsArr) {
 
     return {max, min, total, average, maxSong, minSong, albumsMap, maxAlbum};
 }
-
-/** 
+/**
  * async function that gets lyrics of all recodings(songs)
-*/
+ * @param {Map} recordings 
+ */
 async function getLyricsOf(recordings) {
     try {
          for (let [record, artist] of recordings.entries()) {
@@ -144,9 +169,13 @@ const wordCount = (str) => {
     return str.match(/\S+/g).length;
 }
 
-/** 
+/**
  * async function that gets all release groups(equivalent to albums) and have all releases for that album 
-*/
+ * @param {string} url 
+ * @param {Array} releaseGroups 
+ * @param {int} count 
+ * @param {int} artist 
+ */
 async function fetchAllReleaseGroups(url, releaseGroups, count, artist) {
     try {
         const res = await fetch(url);
@@ -168,9 +197,11 @@ async function fetchAllReleaseGroups(url, releaseGroups, count, artist) {
     }
 }
 
-/** 
- * function that gets all recordings/songs in each release of an album(or release group)
-*/
+/**
+ * async function that gets all recordings/songs in each release of an album(or release group)
+ * @param {Map} recordings 
+ * @param {Array} release 
+ */
 async function getRecordings(recordings, release) {
     try {
         const recordingUrl = `http://musicbrainz.org/ws/2/recording/?query=reid:${release.id}&limit=100&fmt=json`
@@ -195,6 +226,10 @@ function refresh() {
     $('#p1')[0].innerHTML = ''
     $('#p2')[0].innerHTML = ''
     $('#p3')[0].innerHTML = ''
+    $('#p4')[0].innerHTML = ''
+
+    var canvas = $('#canvas')[0];
+    canvas.width = canvas.width;
 }
 
 document.addEventListener('DOMContentLoaded', () => {
